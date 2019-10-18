@@ -1,7 +1,9 @@
 package com.boot.jenkinsdemo.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.session.data.redis.RedisFlushMode;
+import org.springframework.session.data.redis.config.ConfigureRedisAction;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
 /**
@@ -15,11 +17,15 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
 @Configuration
 //@EnableCaching//开启缓存注解
 //RedisFlushMode有两个参数：ON_SAVE（表示在response commit前刷新缓存），IMMEDIATE（表示只要有更新，就刷新缓存）
-@EnableRedisHttpSession(maxInactiveIntervalInSeconds= 24*60*60) //SpringSession的过期时间（单位：秒）
+@EnableRedisHttpSession(maxInactiveIntervalInSeconds= 120) //SpringSession的过期时间（单位：秒）
 public class SessionConfig {
 //    @Bean
 //    public static ConfigureRedisAction configureRedisAction() {
 //        //让springSession不再执行config命令
 //        return ConfigureRedisAction.NO_OP;
 //    }
+    @Bean
+    public static ConfigureRedisAction configureRedisAction() {
+        return ConfigureRedisAction.NO_OP;
+    }
 }

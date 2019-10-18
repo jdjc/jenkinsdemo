@@ -145,7 +145,7 @@ public class IndexController {
             map.put("name",username+"_"+System.currentTimeMillis());
             map.put("account",username);
             map.put("sessionid",session.getId());
-            session.setAttribute("username",map);
+            session.setAttribute(username,map);
         }
         System.out.println(username+"_sessionid:"+session.getId());
         return username+"_sessionid:"+session.getId();
