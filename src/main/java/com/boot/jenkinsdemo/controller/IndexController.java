@@ -13,12 +13,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.net.CookieStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -133,43 +136,42 @@ public class IndexController {
     }
 
     @RequestMapping(value="/setsession",method = RequestMethod.GET)
-    public String setSession(HttpServletRequest request){
-        String username=request.getParameter("username");
-        Map<String,Object> map = new HashMap();
-        map.put("name","我是"+username+"_"+System.currentTimeMillis());
-        map.put("account",username);
-        request.getSession().setAttribute(username,map);
-        String sessionId = request.getSession().getId();
-        System.out.println(username+"_sessionid:"+sessionId);
-        return sessionId;
+    public String setSession(HttpServletRequest request,@RequestParam(value = "username")String username,HttpSession
+            session){
+        Object obj=session.getAttribute("username");
+        if(obj==null){
+            System.out.println("不存在session,加入username:"+username);
+            Map<String,Object> map = new HashMap();
+            map.put("name",username+"_"+System.currentTimeMillis());
+            map.put("account",username);
+            map.put("sessionid",session.getId());
+            session.setAttribute("username",map);
+        }
+        System.out.println(username+"_sessionid:"+session.getId());
+        return username+"_sessionid:"+session.getId();
     }
 
     @RequestMapping(value="/getsession",method = RequestMethod.GET)
-    public Map<String,Object> getSession(HttpServletRequest request){
+    public Map<String,Object> getSession(HttpServletRequest request,HttpSession
+            session){
         String username=request.getParameter("username");
         String sessionId = request.getSession().getId();
-        System.out.println(username+"_sessionID:"+sessionId);
-        System.out.println("-=============="+redisTemplate.opsForValue().get(username));
+        System.out.println("获取====>"+username+"_sessionID:"+sessionId);
         Object obj = request.getSession().getAttribute(username);
+        if(obj!=null){
+            Cookie[] cookies=request.getCookies();
+            if(cookies!=null && cookies.length>0){
+                for (Cookie c:cookies){
+                    System.out.println("\t\t\t"+c.getName()+"."+c.getValue());
+                }
+            }
+        }
         Map<String,Object> map = new HashMap();
         map.put("sessionId",sessionId);
         map.put("user",obj);
         return map;
     }
 
-    @RequestMapping(value="/addsession",method = RequestMethod.GET)
-    public String addsession(HttpSession session, Model model){
-        Map<String,Object> map = new HashMap();
-        map.put("name","my name is 超级管理员"+System.currentTimeMillis());
-        map.put("account","administrator");
-        model.addAttribute("area", JSON.toJSONString(map));
-        session.setAttribute("area",JSON.toJSONString(map));
-        return session.getId();
-    }
 
-    @RequestMapping(value="/getmysession",method = RequestMethod.GET)
-    public String getmysession(HttpSession session){
-        return session.getAttribute("area")+"=="+session.getId();
-    }
 
 }
