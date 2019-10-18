@@ -1,4 +1,5 @@
 package com.boot.jenkinsdemo.controller;
+import com.alibaba.fastjson.JSON;
 import com.boot.jenkinsdemo.common.ResponseBean;
 import com.boot.jenkinsdemo.exception.CustomException;
 import com.boot.jenkinsdemo.service.UserService;
@@ -7,6 +8,7 @@ import com.boot.jenkinsdemo.util.JedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -150,6 +153,21 @@ public class IndexController {
         map.put("sessionId",sessionId);
         map.put("user",obj);
         return map;
+    }
+
+    @RequestMapping(value="/addsession",method = RequestMethod.GET)
+    public String addsession(HttpSession session, Model model){
+        Map<String,Object> map = new HashMap();
+        map.put("name","my name is 超级管理员"+System.currentTimeMillis());
+        map.put("account","administrator");
+        model.addAttribute("area", JSON.toJSONString(map));
+        session.setAttribute("area",JSON.toJSONString(map));
+        return session.getId();
+    }
+
+    @RequestMapping(value="/getmysession",method = RequestMethod.GET)
+    public String getmysession(HttpSession session){
+        return session.getAttribute("area")+"=="+session.getId();
     }
 
 }
