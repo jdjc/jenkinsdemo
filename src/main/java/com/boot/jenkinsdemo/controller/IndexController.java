@@ -134,21 +134,23 @@ public class IndexController {
 
     @RequestMapping(value="/setsession",method = RequestMethod.GET)
     public String setSession(HttpServletRequest request){
+        String username=request.getParameter("username");
         Map<String,Object> map = new HashMap();
-        map.put("name","我是超级管理员"+System.currentTimeMillis());
-        map.put("account","admin");
-        request.getSession().setAttribute("userSession",map);
+        map.put("name","我是"+username+"_"+System.currentTimeMillis());
+        map.put("account",username);
+        request.getSession().setAttribute(username,map);
         String sessionId = request.getSession().getId();
-        System.out.println("sessionid:"+sessionId);
+        System.out.println(username+"_sessionid:"+sessionId);
         return sessionId;
     }
 
     @RequestMapping(value="/getsession",method = RequestMethod.GET)
     public Map<String,Object> getSession(HttpServletRequest request){
+        String username=request.getParameter("username");
         String sessionId = request.getSession().getId();
-        System.out.println("get sessionID:"+sessionId);
-        System.out.println("-=============="+redisTemplate.opsForValue().get("userSession"));
-        Object obj = request.getSession().getAttribute("userSession");
+        System.out.println(username+"_sessionID:"+sessionId);
+        System.out.println("-=============="+redisTemplate.opsForValue().get(username));
+        Object obj = request.getSession().getAttribute(username);
         Map<String,Object> map = new HashMap();
         map.put("sessionId",sessionId);
         map.put("user",obj);
