@@ -15,7 +15,7 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
 @Configuration
 //@EnableCaching//开启缓存注解
 //RedisFlushMode有两个参数：ON_SAVE（表示在response commit前刷新缓存），IMMEDIATE（表示只要有更新，就刷新缓存）
-@EnableRedisHttpSession(maxInactiveIntervalInSeconds= 1800,redisFlushMode = RedisFlushMode.ON_SAVE, redisNamespace = "testsession") //SpringSession的过期时间（单位：秒）
+@EnableRedisHttpSession(maxInactiveIntervalInSeconds= 1800) //SpringSession的过期时间（单位：秒）
 public class SessionConfig {
 //    @Bean
 //    public static ConfigureRedisAction configureRedisAction() {
