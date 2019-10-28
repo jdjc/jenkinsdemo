@@ -5,6 +5,8 @@ import com.boot.jenkinsdemo.exception.CustomException;
 import com.boot.jenkinsdemo.service.UserService;
 import com.boot.jenkinsdemo.service.impl.SecKillServiceImpl;
 import com.boot.jenkinsdemo.util.JedisUtil;
+import com.boot.jenkinsdemo.util.RedisLock;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -23,9 +25,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.net.CookieStore;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Simple to Introduction
@@ -36,6 +43,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping(value = "/redis")
+@Slf4j
 public class IndexController {
     @Autowired
     private UserService userService;
@@ -44,6 +52,9 @@ public class IndexController {
 
     @Autowired
     private SecKillServiceImpl secKillService;
+
+    @Autowired
+    private RedisLock redisLock;
 
    // @RequestMapping(value = "initString",method = RequestMethod.GET)
     public String initStringData() {
@@ -93,6 +104,57 @@ public class IndexController {
             tel="13001277891";
         }
         return  userService.findUserName(tel);
+    }
+
+    /**
+     * 测试注册手机号记录验证码次数
+     * @param mobile
+     */
+    @RequestMapping(value = "regMobileCheck",method = RequestMethod.GET)
+    public void checkRegMobileCount(@RequestParam(value = "mobile")String mobile){
+        String key="CHECK_REG_MOBILE_COUNT"+mobile;
+        long msgcount=redisTemplate.opsForValue().increment(key,1);
+        if(msgcount==1){
+            Calendar curDate = Calendar.getInstance();
+            Calendar nextDayDate = new GregorianCalendar(curDate.get(Calendar.YEAR), curDate.get(Calendar.MONTH), curDate.get(Calendar.DATE)+1, 0, 0, 0);
+            long remainTime = (nextDayDate.getTimeInMillis() - curDate.getTimeInMillis())/1000;
+            System.out.println(remainTime);
+            redisTemplate.expire(key,60, TimeUnit.SECONDS);
+        }else{
+           String count = redisTemplate.opsForValue().get(key);
+           log.info("手机号{}已经发了{}条",mobile,count);
+        }
+    }
+
+
+
+
+    /**
+     * 测试redis分布式锁
+     * @param loanid
+     */
+    @RequestMapping(value = "trylock",method = RequestMethod.GET)
+    public void checkTrylock(@RequestParam(value = "loanid")String loanid){
+
+        ExecutorService executorService=Executors.newFixedThreadPool(5);
+        for (int i = 0; i < 8; i++) {
+            executorService.execute(()->{
+                log.info(Thread.currentThread().getName()+"企图获取{}的锁",loanid);
+                try {
+                    redisLock.tryLock(loanid,loanid,10,TimeUnit.SECONDS);
+                    log.info("\t{}获取到{}的锁",Thread.currentThread().getName(),loanid);
+                    Thread.sleep(1000);
+                    redisLock.unlock(loanid,loanid);
+                    log.info("\t\t{}正常释放{}的锁",Thread.currentThread().getName(),loanid);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }finally {
+                    log.info("{}finally释放{}的锁",Thread.currentThread().getName(),loanid);
+                    redisLock.unlock(loanid,loanid);
+                }
+            });
+        }
+
     }
 
     /**

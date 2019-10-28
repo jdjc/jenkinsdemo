@@ -99,6 +99,28 @@
             <scope>compile</scope>
         </dependency>
 
+
+        <dependency>
+            <groupId>fakepath</groupId>
+            <artifactId>jresplus-remoting</artifactId>
+            <version>1.1.8</version>
+        </dependency>
+
+
+        <!--eureka server -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-eureka-server</artifactId>
+            <version>1.4.2.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.5.2</version>
+            <scope>test</scope>
+        </dependency>
+
+
     </dependencies>
 
     <build>

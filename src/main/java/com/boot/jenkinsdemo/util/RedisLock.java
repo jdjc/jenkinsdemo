@@ -1,9 +1,12 @@
 package com.boot.jenkinsdemo.util;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Simple to Introduction
@@ -37,6 +40,37 @@ public class RedisLock {
             }
         }
         return false;
+    }
+
+    /**
+     * 锁在给定的等待时间内空闲，则获取锁成功 返回true， 否则返回false，作为阻塞式锁使用
+     * @param key 锁键
+     * @param value 被谁锁定
+     * @param timeout 尝试获取锁时长，建议传递500,结合实践单位，则可表示500毫秒
+     * @param unit，建议传递TimeUnit.MILLISECONDS
+     * @return
+     * @throws InterruptedException
+     */
+    public boolean tryLock(String key , String value , long timeout , TimeUnit unit) throws InterruptedException {
+        //纳秒
+        long begin = System.nanoTime();
+        do {
+            if (redisTemplate.opsForValue().setIfAbsent(key,value)) {
+                redisTemplate.expire(key,timeout,TimeUnit.SECONDS);
+                log.info("成功获取{}的锁,设置锁过期时间为30秒",key);
+                return Boolean.TRUE;
+            } else {
+                // 存在锁 ，但可能获取不到，原因是获取的一刹那间
+                  String desc = redisTemplate.opsForValue().get(key);
+                  log.info("{}等待获取{}的锁,正被{}锁定",Thread.currentThread().getName(),key,desc);
+            } if (timeout == 0) {
+                break;
+            }
+            //在其睡眠的期间，锁可能被解，也可能又被他人占用，但会尝试继续获取锁直到指定的时间
+            Thread.sleep(100);
+        } while ((System.nanoTime() - begin) < unit.toNanos(timeout));
+        //因超时没有获得锁
+        return Boolean.FALSE;
     }
 
     /**
